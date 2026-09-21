@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Financial Transaction Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #0a0a1a;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 10, 30, 0.9);
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        
+        #info-panel h1 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #64c8ff, #ff64b4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #info-panel p {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-label {
+            color: #888;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #64c8ff;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 30, 0.9);
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            display: flex;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        
+        .control-btn {
+            background: linear-gradient(135deg, #1a1a3a, #2a2a5a);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .control-btn:hover {
+            background: linear-gradient(135deg, #2a2a5a, #3a3a7a);
+            border-color: #64c8ff;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.active {
+            background: linear-gradient(135deg, #64c8ff, #6464ff);
+            border-color: #64c8ff;
+        }
+        
+        #tooltip {
+            position: absolute;
+            background: rgba(10, 10, 30, 0.95);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(100, 200, 255, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        #tooltip h3 {
+            margin-bottom: 8px;
+            color: #64c8ff;
+        }
+        
+        #tooltip .amount {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        
+        .positive {
+            color: #64ff64;
+        }
+        
+        .negative {
+            color: #ff6464;
+        }
+        
+        #legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 10, 30, 0.9);
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.85em;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="info-panel">
+        <h1>🌐 Transaction Galaxy</h1>
+        <p>A 3D visualization of financial transactions where each transaction orbits around category centers like planets in a galaxy.</p>
+        <div class="stat-row">
+            <span class="stat-label">Total Transactions:</span>
+            <span class="stat-value" id="total-transactions">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Total Volume:</span>
+            <span class="stat-value" id="total-volume">$0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Categories:</span>
+            <span class="stat-value" id="total-categories">0</span>
+        </div>
+    </div>
+    
+    <div id="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff6464;"></div>
+            <span>Income (Positive)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #6464ff;"></div>
+            <span>Expense (Negative)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #64ff64;"></div>
+            <span>Transfer</span>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <button class="control-btn active" data-view="galaxy">Galaxy View</button>
+        <button class="control-btn" data-view="timeline">Timeline</button>
+        <button class="control-btn" data-view="network">Network</button>
+        <button class="control-btn" data-view="scatter">3D Scatter</button>
+    </div>
+    
+    <div id="tooltip"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
